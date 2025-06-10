@@ -2,6 +2,9 @@
 
 Tagger is a Django web application for organizing images by tags. Users can upload images to the `media/` directory, assign tags to them via a POST request, and download a ZIP file where images are organized in a subfolders for each tag (e.g., `tags/subfolder/image.jpg`). Images without tags are placed in `tags/untagged/`. The application is designed for efficient image categorization and export.
 
+# Live
+[View the deployed site on Render](https://imagetagger-bdnx.onrender.com)
+
 ## Features
 - Generate a downloadable ZIP file with images organized by tags.
 
