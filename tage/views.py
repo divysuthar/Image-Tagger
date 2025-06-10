@@ -2,14 +2,11 @@ from django.shortcuts import render, redirect
 from django.core.files.storage import FileSystemStorage
 import json
 import os
-import shutil
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse
 from django.conf import settings
 from urllib.parse import unquote, urlparse
 import zipfile
 from io import BytesIO
-
-# Create your views here.
 
 
 def home(request):
@@ -18,6 +15,7 @@ def home(request):
 
 def takeImages(request):
     if request.method == "POST":
+
         # Handling images
         images = request.FILES.getlist("images")
         fs = FileSystemStorage()
@@ -45,62 +43,60 @@ def takeImages(request):
 
 
 def assignTags(request):
-    if request.method == "POST":
-        tags_json = request.POST.get("tags_data")
+    # Ensure the request method is POST
+    if request.method != "POST":
+        return HttpResponse("Method not allowed", status=405)
 
-        try:
-            tag_map = json.loads(tags_json)
-            print("MEDIA_ROOT:", settings.MEDIA_ROOT)
-            print("MEDIA_ROOT exists:", os.path.exists(settings.MEDIA_ROOT))
-            print("MEDIA_ROOT writable:", os.access(settings.MEDIA_ROOT, os.W_OK))
-            
-            temp_dir = os.path.join(settings.MEDIA_ROOT, "tagged_temp")
-            print("Full temp_dir path:", temp_dir)
-            if not os.path.exists(temp_dir):
-                os.makedirs(temp_dir)
-                print("Created temporary directory for tagged images.")
+    # Get tags_data from request.POST
+    tags_data = request.POST.get("tags_data")
+    if not tags_data:
+        return HttpResponse("No tags_data provided", status=400)
 
-            # print("Tag map:", tag_map)
-            # print("Temp directory created at:", temp_dir)
+    try:
+        tags_data = json.loads(tags_data)
+        print("Parsed tags_data:", tags_data)
 
-            for image_url, tags in tag_map.items():
-                # Convert URL to file path
-                relative_path = unquote(urlparse(image_url).path.lstrip("/"))
-                full_image_path = os.path.join(settings.BASE_DIR, relative_path)
-                print("Full image path:", full_image_path)
-                if not os.path.exists(full_image_path):
+        # Initialize hash map and ZIP file
+        tag_hash = {}
+        file_contents = BytesIO()
+        fs = FileSystemStorage()
+
+        with zipfile.ZipFile(file_contents, "w", zipfile.ZIP_DEFLATED) as zipf:
+            for image_url, tags in tags_data.items():
+                # Clean the URL to get the file name
+                parsed_url = urlparse(image_url)
+                path_parts = parsed_url.path.split("/")
+                file_name = unquote(path_parts[-1] if path_parts else "")
+
+                tag_hash[file_name] = tags
+
+                image_path = os.path.join(settings.MEDIA_ROOT, file_name)
+                if not os.path.exists(image_path):
+                    print(f"Warning: Image not found at {image_path}")
                     continue
 
-                for tag in tags:
-                    print("Processing tag:", tag)
-                    tag_folder = os.path.join(temp_dir, tag)
-                    os.makedirs(tag_folder, exist_ok=True)
-                    print("Tag folder created at:", tag_folder)
+                with open(image_path, "rb") as image_file:
+                    image_data = image_file.read()
 
-                    image_name = os.path.basename(full_image_path)
-                    dest_path = os.path.join(tag_folder, image_name)
-                    print("Destination path for image:", dest_path)
+                if not tags:
+                    # If no tags, place in 'tags/untagged/'
+                    zip_path = f"untagged/{file_name}"
+                    zipf.writestr(zip_path, image_data)
+                else:
+                    # In their respective tag folders
+                    for tag in tags:
+                        zip_path = f"{tag}/{file_name}"
+                        zipf.writestr(zip_path, image_data)
 
-                    if not os.path.exists(dest_path):  # avoid duplicates
-                        shutil.copy(full_image_path, dest_path)
+        # Rewind the BytesIO buffer
+        file_contents.seek(0)
 
-            # Create ZIP file
-            zip_buffer = BytesIO()
-            with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-                for root, _, files in os.walk(temp_dir):
-                    for file in files:
-                        full_path = os.path.join(root, file)
-                        arcname = os.path.relpath(full_path, temp_dir)
-                        zip_file.write(full_path, arcname)
+        # Return the ZIP file as a downloadable FileResponse
+        response = FileResponse(
+            file_contents, as_attachment=True, filename="tags_data.zip"
+        )
+        print("tag_hash:", tag_hash)  # For debugging
+        return response
 
-            # Cleanup temp folder
-            shutil.rmtree(temp_dir)
-
-            zip_buffer.seek(0)
-            response = HttpResponse(zip_buffer, content_type="application/zip")
-            response["Content-Disposition"] = "attachment; filename=tagged_images.zip"
-            return response
-        except Exception as e:
-            print("Error:", e)
-
-        return redirect("home")
+    except json.JSONDecodeError:
+        return HttpResponse("Invalid JSON format in tags_data", status=400)
