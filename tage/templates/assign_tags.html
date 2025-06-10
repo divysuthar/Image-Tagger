@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Assign Tags to Images{% endblock %}
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+
+<div class="container mt-4">
+    <h3 class="text-center mb-4">Assign Tags to Each Image</h3>
+
+    <form method="post" action="{% url 'assignTags' %}" id="tagForm">
+        {% csrf_token %}
+        {% for image in images %}
+        <div class="row mb-4">
+            <div class="col-md-4 text-center">
+                <img src="{{ image }}" class="img-fluid" style="max-height: 150px;">
+            </div>
+            <div class="col-md-8">
+                <label>Tags for this image:</label>
+                <input type="text" class="form-control tag-input" name="{{ image }}">
+            </div>
+        </div>
+        {% endfor %}
+        <input type="hidden" name="tags_data" id="tagsData">
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Submit Tags</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const suggestions = {{ suggested_tags|safe }};  // From previous step
+    const tagInputs = document.querySelectorAll('.tag-input');
+    const tagifyMap = {};
+
+    tagInputs.forEach(input => {
+        let tagify = new Tagify(input, {
+            whitelist: suggestions,
+            maxTags: 10,
+            enforceWhitelist: false,
+            duplicates: false,
+            dropdown: {
+                enabled: 0,
+                closeOnSelect: false
+            }
+        });
+        tagifyMap[input.name] = tagify;
+    });
+
+    document.getElementById('tagForm').addEventListener('submit', function (e) {
+        const result = {};
+        for (let key in tagifyMap) {
+            result[key] = tagifyMap[key].value.map(t => t.value);
+        }
+        document.getElementById('tagsData').value = JSON.stringify(result);
+    });
+</script>
+{% endblock %}

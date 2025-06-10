@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Images{% endblock %}
+
+{% block content %}
+<!-- Load Tagify CSS & Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css" rel="stylesheet">
+
+<div class="container mt-5">
+    <h2 class="mb-4 text-center">Upload Images with Tags</h2>
+
+    <form method="post" action="{% url 'takeimages' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row mb-4">
+            <!-- Image Input -->
+            <div class="col-md-6">
+                <label for="images" class="form-label">Select Images</label>
+                <input class="form-control" type="file" name="images" id="images" multiple accept="image/*">
+            </div>
+
+            <!-- Tag Input -->
+            <div class="col-md-6">
+                <label for="tags" class="form-label">Enter Tags</label>
+                <input class="form-control" name="tags" id="tags" placeholder="e.g. travel, food, fun">
+            </div>
+        </div>
+
+        <div class="text-center">
+            <button type="submit" class="btn btn-success">Upload</button>
+        </div>
+    </form>
+</div>
+
+<!-- Tagify JS -->
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+<script>
+    // Suggestion list (can come from your backend too)
+    const tagSuggestions = ["nature", "travel", "food", "sunset", "pets", "mountains", "friends", "fun", "adventure"];
+
+    // Tagify settings
+    const input = document.querySelector('input[name=tags]');
+    const tagify = new Tagify(input, {
+        whitelist: tagSuggestions,         // Suggestion list
+        maxTags: 10,                        // Limit to 10 tags
+        enforceWhitelist: false,          // Allow custom tags too
+        duplicates: false,                // No duplicate tags
+        dropdown: {
+            maxItems: 10,                 // Max suggestions to show
+            classname: "tags-look",       // Style
+            enabled: 0,                   // Show on focus
+            closeOnSelect: false          // Keep dropdown open on selection
+        }
+    });
+</script>
+{% endblock %}

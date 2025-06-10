@@ -1,0 +1,14 @@
+<!-- templates/home.html -->
+{% extends 'base.html' %}
+
+{% block title %}
+  Home
+{% endblock %}
+
+{% block content %}
+  <div class="text-center mt-5">
+    <h2 class="mb-4">Welcome to the Home Page</h2>
+
+    <button class="btn btn-primary"><a href="{% url 'takeimages' %}" class="btn btn-primary">Go</a></button>
+  </div>
+{% endblock %}
