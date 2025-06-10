@@ -71,3 +71,6 @@ Tagger/
 
 ## Assigning Tags
 ![Assigning Tags](Images/Assigning_tags.png)
+
+## Flowchart
+![FLowchart](Flowchart.png)
