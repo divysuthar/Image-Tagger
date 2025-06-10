@@ -7,12 +7,14 @@ from django.conf import settings
 from urllib.parse import unquote, urlparse
 import zipfile
 from io import BytesIO
+from django.views.decorators.csrf import csrf_exempt
 
 
 def home(request):
     return render(request, "home.html")
 
 
+@csrf_exempt
 def takeImages(request):
     if request.method == "POST":
 
@@ -42,6 +44,7 @@ def takeImages(request):
     return render(request, "takeImages.html")
 
 
+@csrf_exempt
 def assignTags(request):
     # Ensure the request method is POST
     if request.method != "POST":

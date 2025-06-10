@@ -60,3 +60,14 @@ Tagger/
 ├── manage.py                   
 ├── README.md                   
 ```
+
+# Images
+
+## Home page
+![Home Page](Images/Home.png)
+
+## Upload Images & Tags
+![Imgaes & Tags](Images/Upload_images_tags.png)
+
+## Assigning Tags
+![Assigning Tags](Images/Assigning_tags.png)
