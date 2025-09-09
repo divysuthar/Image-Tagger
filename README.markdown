@@ -44,6 +44,8 @@ Tagger is a Django web application for organizing images by tags. Users can uplo
   ``` bash
   docker build -t my_django_app .
   docker run -p 8000:8000 my_django_app
+  # OR
+  docker-compose up
 ```
 
 
